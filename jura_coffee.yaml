@@ -8,15 +8,12 @@ esphome:
   comment: ${device_description}
   platform: ESP8266
   board: d1_mini
-  platformio_options:
-    upload_speed: 115200
   includes:
     - jura_coffee.h
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  domain: .lan
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -25,14 +22,17 @@ wifi:
 
 captive_portal:
 
+# Enable logging
 logger:
-  level: DEBUG
+  #level: DEBUG
 
-# Enable Home Assistant API & OTA Updates
+# Enable Home Assistant API
 api:
-  password: !secret api_password
+
 ota:
-  password: !secret ota_password
+
+web_server:
+  port: 80
 
 uart:
   tx_pin: D1
@@ -40,14 +40,100 @@ uart:
   baud_rate: 9600
   id: uart_bus
 
-# UART bytes below have been generated with generate_esphome_jura_yaml.py
-# Tested with a Jura Impressa J6
+sensor:
+  - platform: template
+    id: num_espresso
+    name: "Espressos"
+    accuracy_decimals: 0
+    lambda: "return {};"
+  - platform: template
+    id: num_coffee
+    name: "Coffees"
+    accuracy_decimals: 0
+    lambda: "return {};"
+  - platform: template
+    id: num_big_coffee
+    name: "Big Coffees"
+    accuracy_decimals: 0
+    lambda: "return {};"
+  - platform: template
+    id: num_double_coffee
+    name: "Double Coffees"
+    accuracy_decimals: 0
+    lambda: "return {};"
+  - platform: template
+    id: num_powder_coffee
+    name: "Powder Coffees"
+    accuracy_decimals: 0
+    lambda: "return {};"
+  - platform: template
+    id: num_unknown1
+    name: "UNKNWN1"
+    accuracy_decimals: 0
+    lambda: "return {};"
+  - platform: template
+    id: num_unknown2
+    name: "UNKNWN2"
+    accuracy_decimals: 0
+    lambda: "return {};"
+  - platform: template
+    id: num_unknown3
+    name: "UNKNWN3"
+    accuracy_decimals: 0
+    lambda: "return {};"
 
+
+binary_sensor:
+  - platform: template
+    id: power_status
+    name: "Power Status"
+    lambda: "return {};"
+  - platform: template
+    id: err_tray
+    name: "Tray Error"
+    lambda: "return {};"
+  - platform: template
+    id: err_tank
+    name: "Water Tank Error"
+    lambda: "return {};"
+  - platform: template
+    id: err_grounds
+    name: "Grounds Error"
+    lambda: "return {};"
+  - platform: template
+    id: rinsing_status
+    name: "Rinsing Status"
+    lambda: "return {};"
+  - platform: template
+    id: sel_big_coffee
+    name: "Selected Big Coffee"
+    lambda: "return {};"
+  - platform: template
+    id: sel_coffee
+    name: "Selected Coffees"
+    lambda: "return {};"
+  - platform: template
+    id: sel_espresso
+    name: "Selected Espresso"
+    lambda: "return {};"
+  - platform: template
+    id: sel_mild
+    name: "Selected Mild"
+    lambda: "return {};"
+  - platform: template
+    id: sel_normal
+    name: "Selected Normal"
+    lambda: "return {};"
+  - platform: template
+    id: sel_strong
+    name: "Selected Strong"
+    lambda: "return {};"
+    
 switch:
   - platform: template
-    name: 'Coffee Machine'
-    icon: "mdi:coffee-maker"
-    id: jura_on_off_switch
+    name: "Machine Power"
+    lambda: |-
+      return id(power_status).state;
     turn_on_action:
       - uart.write: [0xDF, 0xDB, 0xDB, 0xDF]  ## 'A'
       - delay: 8ms
@@ -62,7 +148,6 @@ switch:
       - uart.write: [0xDF, 0xFF, 0xDB, 0xDB]  ## '\r'
       - delay: 8ms
       - uart.write: [0xFB, 0xFB, 0xDB, 0xDB]  ## '\n'
-
     turn_off_action:
       - uart.write: [0xDF, 0xDB, 0xDB, 0xDF]  ## 'A'
       - delay: 8ms
@@ -77,13 +162,82 @@ switch:
       - uart.write: [0xDF, 0xFF, 0xDB, 0xDB]  ## '\r'
       - delay: 8ms
       - uart.write: [0xFB, 0xFB, 0xDB, 0xDB]  ## '\n'
-    optimistic: true
-    assumed_state: true
-
   - platform: template
-    name: 'Make Hot Water'
-    icon: "mdi:cup-water"
-    id: jura_make_hot_water
+    name: "Select Big Coffee"
+    lambda: |-
+      return id(sel_big_coffee).state;
+    turn_on_action:
+      - uart.write: [0xFB, 0xDF, 0xDB, 0xDF]  ## 'F'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xDB, 0xDB, 0xDF]  ## 'A'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xFF, 0xDB]  ## ':'
+      - delay: 8ms
+      - uart.write: [0xDB, 0xDB, 0xFF, 0xDB]  ## '0'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xDB, 0xFF, 0xDB]  ## '2'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xFF, 0xDB, 0xDB]  ## '\r'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xDB, 0xDB]  ## '\n'
+  - platform: template
+    name: "Select Coffee"
+    lambda: |-
+      return id(sel_coffee).state;
+    turn_on_action:
+      - uart.write: [0xFB, 0xDF, 0xDB, 0xDF]  ## 'F'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xDB, 0xDB, 0xDF]  ## 'A'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xFF, 0xDB]  ## ':'
+      - delay: 8ms
+      - uart.write: [0xDB, 0xDB, 0xFF, 0xDB]  ## '0'
+      - delay: 8ms
+      - uart.write: [0xFF, 0xDB, 0xFF, 0xDB]  ## '3'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xFF, 0xDB, 0xDB]  ## '\r'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xDB, 0xDB]  ## '\n'
+  - platform: template
+    name: "Select Espresso"
+    lambda: |-
+      return id(sel_espresso).state;
+    turn_on_action:
+      - uart.write: [0xFB, 0xDF, 0xDB, 0xDF]  ## 'F'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xDB, 0xDB, 0xDF]  ## 'A'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xFF, 0xDB]  ## ':'
+      - delay: 8ms
+      - uart.write: [0xDB, 0xDB, 0xFF, 0xDB]  ## '0'
+      - delay: 8ms
+      - uart.write: [0xDB, 0xDF, 0xFF, 0xDB]  ## '4'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xFF, 0xDB, 0xDB]  ## '\r'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xDB, 0xDB]  ## '\n'
+  - platform: template
+    name: "Press Start"
+    lambda: |-
+      return id(sel_coffee).state;
+    turn_on_action:
+      - uart.write: [0xFB, 0xDF, 0xDB, 0xDF]  ## 'F'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xDB, 0xDB, 0xDF]  ## 'A'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xFF, 0xDB]  ## ':'
+      - delay: 8ms
+      - uart.write: [0xDB, 0xDB, 0xFF, 0xDB]  ## '0'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xDF, 0xFF, 0xDB]  ## '5'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xFF, 0xDB, 0xDB]  ## '\r'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xDB, 0xDB]  ## '\n'
+  - platform: template
+    name: "Select Mild"
+    lambda: |-
+      return id(sel_mild).state;
     turn_on_action:
       - uart.write: [0xFB, 0xDF, 0xDB, 0xDF]  ## 'F'
       - delay: 8ms
@@ -98,12 +252,47 @@ switch:
       - uart.write: [0xDF, 0xFF, 0xDB, 0xDB]  ## '\r'
       - delay: 8ms
       - uart.write: [0xFB, 0xFB, 0xDB, 0xDB]  ## '\n'
-
   - platform: template
-    name: 'Make Coffee'
-    icon: "mdi:coffee"
-    id: jura_make_coffee
+    name: "Select Normal"
+    lambda: |-
+      return id(sel_normal).state;
     turn_on_action:
+      - uart.write: [0xFB, 0xDF, 0xDB, 0xDF]  ## 'F'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xDB, 0xDB, 0xDF]  ## 'A'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xFF, 0xDB]  ## ':'
+      - delay: 8ms
+      - uart.write: [0xDB, 0xDB, 0xFF, 0xDB]  ## '0'
+      - delay: 8ms
+      - uart.write: [0xFF, 0xDF, 0xFF, 0xDB]  ## '7'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xFF, 0xDB, 0xDB]  ## '\r'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xDB, 0xDB]  ## '\n'
+  - platform: template
+    name: "Select Strong"
+    lambda: |-
+      return id(sel_strong).state;
+    turn_on_action:
+      - uart.write: [0xFB, 0xDF, 0xDB, 0xDF]  ## 'F'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xDB, 0xDB, 0xDF]  ## 'A'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xFF, 0xDB]  ## ':'
+      - delay: 8ms
+      - uart.write: [0xDB, 0xDB, 0xFF, 0xDB]  ## '0'
+      - delay: 8ms
+      - uart.write: [0xDB, 0xFB, 0xFF, 0xDB]  ## '8'
+      - delay: 8ms
+      - uart.write: [0xDF, 0xFF, 0xDB, 0xDB]  ## '\r'
+      - delay: 8ms
+      - uart.write: [0xFB, 0xFB, 0xDB, 0xDB]  ## '\n'
+  - platform: template
+    name: "Select Flush"
+    lambda: |-
+      return id(rinsing_status).state;
+    turn_off_action:
       - uart.write: [0xFB, 0xDF, 0xDB, 0xDF]  ## 'F'
       - delay: 8ms
       - uart.write: [0xDF, 0xDB, 0xDB, 0xDF]  ## 'A'
@@ -118,65 +307,8 @@ switch:
       - delay: 8ms
       - uart.write: [0xFB, 0xFB, 0xDB, 0xDB]  ## '\n'
 
-sensor:
-  - platform: uptime
-    name: "${friendly_name} Uptime"
-
-  - platform: wifi_signal
-    name: "${friendly_name} WiFi Signal"
-    update_interval: 60s
-
-  - platform: template
-    id: num_single_espresso
-    name: "Single Espressos Made"
-    accuracy_decimals: 0
-    lambda: "return {};"
-
-  - platform: template
-    id: num_double_espresso
-    name: "Double Espressos Made"
-    accuracy_decimals: 0
-    lambda: "return {};"
-
-  - platform: template
-    id: num_coffee
-    name: "Coffees Made"
-    accuracy_decimals: 0
-    lambda: "return {};"
-
-  - platform: template
-    id: num_double_coffee
-    name: "Double Coffees Made"
-    accuracy_decimals: 0
-    lambda: "return {};"
-
-  - platform: template
-    id: num_clean
-    name: "Cleanings Performed"
-    accuracy_decimals: 0
-    lambda: "return {};"
-
-text_sensor:
-  - platform: version
-    name: "${friendly_name} ESPHome version"
-    
-  - platform: template
-    id: tray_status
-    name: "Tray Status"
-    lambda: "return {};"
-    
-  - platform: template
-    id: tank_status
-    name: "Water Tank Status"
-    lambda: "return {};"
-
-binary_sensor:
-  - platform: status
-    name: "${friendly_name} Status"
-
-# Custom component to poll coffee machine counters & status
 custom_component:
 - lambda: |-
-    auto my_jura = new JuraCoffee(id(uart_bus),id(num_single_espresso),id(num_double_espresso),id(num_coffee),id(num_double_coffee),id(num_clean),id(tray_status),id(tank_status));
+    auto my_jura = new JuraCoffee(id(uart_bus),id(num_espresso), id(num_coffee), id(num_big_coffee), id(num_double_coffee), id(num_powder_coffee), id(num_unknown1), id(num_unknown2), id(num_unknown3), id(power_status), id(err_tray), id(err_tank), id(err_grounds), id(rinsing_status), id(sel_big_coffee), id(sel_coffee), id(sel_espresso), id(sel_mild), id(sel_normal), id(sel_strong));
     App.register_component(my_jura);
     return {my_jura};
